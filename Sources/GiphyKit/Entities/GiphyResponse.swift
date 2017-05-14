@@ -62,7 +62,7 @@ public struct GiphyResponse {
 }
 
 extension GiphyResponse {
-    init?(json: [String: Any]) {
+    init?(json: [String: Any], imageTypes: [ImageType]) {
         guard let data = json["data"] as? [[String: Any]] else { return nil }
         guard let metaJSON = json["meta"] as? [String: Any],
             let meta = Meta(json: metaJSON) else { return nil }
@@ -75,7 +75,7 @@ extension GiphyResponse {
 
         self.meta = meta
         self.giphies = data.flatMap({ item in
-            Giphy(json: item)
+            Giphy(json: item, types: imageTypes)
         })
     }
 }

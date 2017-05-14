@@ -18,6 +18,7 @@ public protocol GiphyRequest {
     var params: [String: String?] { get }
     var method: String { get }
     var format: Format? { get }
+    var imageTypes: [ImageType] { get }
 }
 
 // MARK: Search
@@ -28,11 +29,11 @@ public protocol GiphyRequest {
 //lang - (optional) specify default country for regional content; format 
 // is 2-letter ISO 639-1 country code. See list of supported languages here
 //fmt - (optional) return results in html or json format (useful for viewing responses as GIFs to debug/test)
-
 public struct SearchRequest: GiphyRequest {
     public let path: String = "search"
     public let method: String = "GET"
     public let query: String
+    public let imageTypes: [ImageType]
     public let limit: Int?
     public let offset: Int?
     public let lang: String?
@@ -52,13 +53,15 @@ public struct SearchRequest: GiphyRequest {
          offset: Int? = nil,
          lang: String? = nil,
          rating: Rating? = nil,
-         format: Format? = nil) {
+         format: Format? = nil,
+         imageTypes: [ImageType] = [.original, .original_still]) {
         self.query = query
         self.limit = limit
         self.offset = offset
         self.lang = lang
         self.rating = rating
         self.format = format
+        self.imageTypes = imageTypes
     }
 }
 
@@ -70,6 +73,7 @@ public struct TrendingRequest: GiphyRequest {
     public let path: String = "trending"
     public let method: String = "GET"
     public let rating: Rating
+    public let imageTypes: [ImageType]
     public let limit: Int?
     public let format: Format?
     public var params: [String : String?] {
@@ -78,10 +82,14 @@ public struct TrendingRequest: GiphyRequest {
                 "fmt": format.map { $0.rawValue }]
     }
 
-    init(rating: Rating, limit: Int? = nil, format: Format? = nil) {
+    init(rating: Rating,
+         limit: Int? = nil,
+         format: Format? = nil,
+         imageTypes: [ImageType] = [.original, .original_still]) {
         self.limit = limit
         self.rating = rating
         self.format = format
+        self.imageTypes = imageTypes
     }
 }
 
@@ -95,6 +103,7 @@ public struct TranslateRequest: GiphyRequest {
     public let path: String = "translate"
     public let method: String = "GET"
     public let term: String
+    public let imageTypes: [ImageType]
     public let rating: Rating?
     public let lang: String?
     public let format: Format?
@@ -105,11 +114,15 @@ public struct TranslateRequest: GiphyRequest {
                 "fmt": format.map { $0.rawValue }]
     }
 
-    init(term: String, rating: Rating? = nil, lang: String? = nil, format: Format? = nil) {
+    init(term: String, rating: Rating? = nil,
+         lang: String? = nil,
+         format: Format? = nil,
+         imageTypes: [ImageType] = [.original, .original_still]) {
         self.term = term
         self.rating = rating
         self.lang = lang
         self.format = format
+        self.imageTypes = imageTypes
     }
 }
 
@@ -121,6 +134,7 @@ public struct RandomRequest: GiphyRequest {
     public let path: String = "random"
     public let method: String = "GET"
     public let tag: String
+    public let imageTypes: [ImageType]
     public let rating: Rating?
     public let format: Format?
     public var params: [String : String?] {
@@ -129,9 +143,13 @@ public struct RandomRequest: GiphyRequest {
                 "fmt": format.map { $0.rawValue }]
     }
 
-    init(tag: String, rating: Rating? = nil, format: Format? = nil) {
+    init(tag: String,
+         rating: Rating? = nil,
+         format: Format? = nil,
+         imageTypes: [ImageType] = [.original, .original_still]) {
         self.tag = tag
         self.rating = rating
         self.format = format
+        self.imageTypes = imageTypes
     }
 }

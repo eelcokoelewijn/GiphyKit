@@ -1,15 +1,10 @@
 import XCTest
 @testable import GiphyKit
 
-enum Result<T> {
-    case success(T)
-    case failure(String)
-}
-
 class GiphyKitTests: XCTestCase {
     var session: URLSession!
-    var baseUrl: URL = URL(string: "http://api.giphy.com/v1/gifs/")!
-    var apiKey: String = "dc6zaTOxFJmzC"
+    var baseUrl: URL = URL(string: "https://api.giphy.com/v1/gifs/")!
+    var apiKey: String = "dc6zaTOxFJmzC" //The public beta key is "dc6zaTOxFJmzC”
     var sampleMetaSuccess: Meta?
 
     override func setUp() {
@@ -23,7 +18,7 @@ class GiphyKitTests: XCTestCase {
         let search = SearchRequest(query: "testing", limit: nil, offset: nil, lang: nil, rating: nil, format: nil)
         request(search) { result in
             if case let .success(response) = result {
-                let result = GiphyResponse(json: response)
+                let result = GiphyResponse(json: response, imageTypes: [.original])
                 XCTAssertNotNil(result)
                 XCTAssertEqual(result?.meta, self.sampleMetaSuccess)
                 exp.fulfill()
@@ -37,7 +32,7 @@ class GiphyKitTests: XCTestCase {
         let search = SearchRequest(query: "testing", limit: nil, offset: nil, lang: nil, rating: nil, format: nil)
         request(search) { result in
             if case let .success(response) = result {
-                let result = GiphyResponse(json: response)
+                let result = GiphyResponse(json: response, imageTypes: [.original])
                 XCTAssertNotNil(result?.pagination)
                 exp.fulfill()
             }
@@ -50,7 +45,7 @@ class GiphyKitTests: XCTestCase {
         let search = SearchRequest(query: "testing")
         request(search) { result in
             if case let .success(response) = result {
-                let result = GiphyResponse(json: response)
+                let result = GiphyResponse(json: response, imageTypes: [.original])
                 XCTAssertEqual(result?.giphies.count, result?.pagination?.count)
                 exp.fulfill()
             }
@@ -63,8 +58,8 @@ class GiphyKitTests: XCTestCase {
         let search = SearchRequest(query: "testing")
         request(search) { result in
             if case let .success(response) = result {
-                let result = GiphyResponse(json: response)
-                XCTAssertTrue(result?.giphies.first?.images.first is Original)
+                let result = GiphyResponse(json: response, imageTypes: [.original])
+                XCTAssertEqual(result?.giphies.first?.images.first?.type, .original)
                 exp.fulfill()
             }
         }
@@ -76,7 +71,8 @@ class GiphyKitTests: XCTestCase {
         ("testParsingOfGiphyResultWithPagination", testParsingOfGiphyResultWithPagination)
     ]
 
-    private func request(_ request: GiphyRequest, completion: @escaping (Result<[String: Any]>) -> Void) {
+    private func request(_ request: GiphyRequest,
+                         completion: @escaping (GiphyNetworkServiceResult<[String: Any]>) -> Void) {
         let requestUrl = baseUrl.appendingPathComponent(request.path, isDirectory: false)
         var items: [URLQueryItem] = request.params.flatMap { (param: (key: String, value: String?)) in
             guard let value = param.value else { return nil }
@@ -88,12 +84,12 @@ class GiphyKitTests: XCTestCase {
         let request = URLRequest(url: urlComp.url!)
         let task = session.dataTask(with: request, completionHandler: { (data, _, _) in
             guard let data = data else {
-                completion(.failure("no data"))
+                completion(.failure(msg: "no data", code: 1001))
                 return
             }
             guard let parseResult = try? JSONSerialization.jsonObject(with: data, options: []),
                 let result = parseResult as? [String: Any] else {
-                    completion(.failure("error parsing json"))
+                    completion(.failure(msg: "error parsing json", code: 1000))
                     return
             }
             completion(.success(result))

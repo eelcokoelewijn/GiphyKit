@@ -22,7 +22,7 @@ public struct Giphy {
 
 extension Giphy {
     // swiftlint:disable function_body_length cyclomatic_complexity
-    public init?(json: [String: Any]) {
+    public init?(json: [String: Any], types: [ImageType]) {
         guard let type = json["type"] as? String else { print("type"); return nil }
         guard let identifier = json["id"] as? String else { print("id"); return nil }
         guard let slug = json["slug"] as? String else { print("slug"); return nil }
@@ -64,38 +64,15 @@ extension Giphy {
         self.sourcePostURL = URL(string: sourcePostURLV)
         self.importDateTime = dateFrmttr.date(from: importDateTimeV)
         self.trendingDateTime = dateFrmttr.date(from: trendingDateTimeV)
-        self.images = getImages(json: images)
+        self.images = get(images: types, fromJson: images)
     }
     // swiftlint:enable function_body_length cyclomatic_complexity
 
-    private func getImages(json: [String: Any]) -> [GiphyImage] {
-        var images: [GiphyImage] = []
-
-        guard let originalDic = json["original"] as? [String: Any],
-            let original = Original(json: originalDic) else { return [] }
-        guard let originalStillDic = json["original_still"] as? [String: Any],
-            let originalStill = Still(json: originalStillDic) else { return [] }
-        guard let fixedHeightDic = json["fixed_height"] as? [String: Any],
-            let fixedHeight = Original(json: fixedHeightDic) else { return [] }
-        guard let fixedHeightStillDic = json["fixed_height_still"] as? [String: Any],
-            let fixedHeightStill = Still(json: fixedHeightStillDic) else { return [] }
-        guard let fixedWidthDic = json["fixed_width"] as? [String: Any],
-            let fixedWidth = Original(json: fixedWidthDic) else { return [] }
-        guard let fixedWidthStillDic = json["fixed_width_still"] as? [String: Any],
-            let fixedWidthStill = Still(json: fixedWidthStillDic) else { return [] }
-        guard let fixedHeightDownDic = json["fixed_height_downsampled"] as? [String: Any],
-            let fixedHeightDown = FixedDownsampled(json: fixedHeightDownDic) else { return [] }
-        guard let fixedWidthDownDic = json["fixed_width_downsampled"] as? [String: Any],
-            let fixedWidthDown = FixedDownsampled(json: fixedWidthDownDic) else { return [] }
-        images.append(original)
-        images.append(originalStill)
-        images.append(fixedHeight)
-        images.append(fixedHeightStill)
-        images.append(fixedWidth)
-        images.append(fixedWidthStill)
-        images.append(fixedHeightDown)
-        images.append(fixedWidthDown)
-
-        return images
+    private func get(images: [ImageType], fromJson json: [String: Any]) -> [GiphyImage] {
+        return images.flatMap({ type in
+            guard let dic: [String: Any] = json[type.rawValue] as? [String: Any],
+                let image: GiphyImage = GiphyImage(json: dic, type: type) else { return nil }
+            return image
+        })
     }
 }
